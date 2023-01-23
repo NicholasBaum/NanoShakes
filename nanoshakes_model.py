@@ -10,13 +10,13 @@ device = 'cpu' if torch.cuda.is_available() else 'cpu'
     x: Tensor of shape batch_size x input_size
 """
 class NanoShakes(nn.Module):
-  def __init__(self, vocab_size, input_size, embd_size, layer_count):
+  def __init__(self, vocab_size, input_size, embd_size, layer_count, head_count, dropout):
     super().__init__()
     self.input_size = input_size
     self.word_embedding = nn.Embedding(vocab_size, embd_size)
     self.pos_embedding = nn.Embedding(input_size, embd_size)
     self.norm1 = nn.LayerNorm(embd_size)
-    self.transformer = nn.Sequential(*[TransformerBlock(embd_size) for _ in range(layer_count)])
+    self.transformer = nn.Sequential(*[TransformerBlock(embd_size, head_count, input_size, dropout) for _ in range(layer_count)])
     self.embd2vocab = nn.Linear(embd_size, vocab_size)
   
   def forward(self, x, targets = None):    
@@ -64,14 +64,14 @@ Transformer
   x: Tensor of shape batch_size x input_size x embd_size
 """  
 class TransformerBlock(nn.Module):
-  def __init__(self, embd_size, head_count, dropout):
+  def __init__(self, embd_size, head_count, input_size, dropout):
     super().__init__()
     head_size = embd_size // head_count
     # allows parallel modules when put in brackets
-    self.heads = nn.ModuleList([Head(embd_size, head_size) for _ in range(head_count)])
+    self.heads = nn.ModuleList([Head(embd_size, head_size, input_size, dropout) for _ in range(head_count)])
     self.proj = nn.Linear(embd_size, embd_size)
     self.drop = nn.Dropout(dropout)
-    self.lastFF = FF_Transformer(embd_size)
+    self.lastFF = FF_Transformer(embd_size, dropout)
     self.norm1 = nn.LayerNorm(embd_size)
     self.norm2 = nn.LayerNorm(embd_size)
 
