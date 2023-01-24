@@ -104,7 +104,7 @@ class Head(nn.Module):
     k = self.k(x)
     v = self.v(x)  
     x = q @ k.transpose(1, 2) # batch_size x input_size x input_size
-    x = x*x.shape[2]**0.5 # scale result 1/sqrt(d_k) in the paper
+    x = x*x.shape[2]**-0.5 # scale result 1/sqrt(d_k) in the paper
     x = x.masked_fill(self.tril[:curr_input_n,:curr_input_n]==0,float('-inf'))    
     x = F.softmax(x, dim = 2)
     x = self.dropout(x)       
