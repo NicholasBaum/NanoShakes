@@ -27,7 +27,7 @@ eval_interval = 100
 learning_rate = 1e-3
 epoch_count = 5000
 eval_average_loss_n = 200
-device = 'cpu' if torch.cuda.is_available() else 'cpu'
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.manual_seed(1337)
 
 # load data
