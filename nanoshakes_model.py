@@ -79,7 +79,8 @@ class TransformerBlock(nn.Module):
     out = self.norm1(x)
     out = torch.cat([h(out) for h in self.heads], dim=-1)       
     out = self.drop(self.proj(out))
-    # TODO: don't know why this is additive
+    # This is additive because it's a residual connection also called skipconnection
+    # idea is kinda branching the calculation and bringing it back together
     x = x + out    
     x = x + self.lastFF(self.norm2(x))
     return x
