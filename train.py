@@ -26,9 +26,9 @@ torch.manual_seed(1337)
 # batch_size = 64 
 # eval_interval = 500
 # learning_rate = 3e-4
-# n_embd = 384
-# n_head = 6
-# n_layer = 6
+# embd_size = 384
+# head_count = 6
+# layer_count = 6
 # dropout = 0.2
 
 # load data
