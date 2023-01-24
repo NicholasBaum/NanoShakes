@@ -88,7 +88,7 @@ class Block(nn.Module):
 # super simple bigram model
 
 
-class BigramLanguageModel(nn.Module):
+class NgGptModel(nn.Module):
 
     def __init__(self, vocab_size, n_embd, block_size, n_layer, n_head, dropout):
         super().__init__()

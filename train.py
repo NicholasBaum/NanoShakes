@@ -1,5 +1,5 @@
 from nanoshakes_model import NanoShakes
-from ng_gpt_model import BigramLanguageModel
+from ng_gpt_model import NgGptModel
 import time
 from datetime import timedelta
 import torch
@@ -75,7 +75,7 @@ def calcAverageError(model):
 print("Using " + device)
 model = NanoShakes(vocab_size=vocab_size, input_size=input_size, embd_size=embd_size,
                    layer_count=layer_count, head_count=head_count, dropout=dropout)
-#model = BigramLanguageModel(vocab_size=vocab_size, n_embd=embd_size, block_size=input_size,
+#model = NgGptModel(vocab_size=vocab_size, n_embd=embd_size, block_size=input_size,
 #                            n_layer=layer_count, n_head=head_count, dropout=dropout)
 
 model.to(device)
