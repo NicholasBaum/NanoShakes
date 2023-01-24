@@ -75,8 +75,8 @@ def calcAverageError(model):
 print("Using " + device)
 model = NanoShakes(vocab_size=vocab_size, input_size=input_size, embd_size=embd_size,
                    layer_count=layer_count, head_count=head_count, dropout=dropout)
-model = BigramLanguageModel(vocab_size=vocab_size, n_embd=embd_size, block_size=input_size,
-                            n_layer=layer_count, n_head=head_count, dropout=dropout)
+#model = BigramLanguageModel(vocab_size=vocab_size, n_embd=embd_size, block_size=input_size,
+#                            n_layer=layer_count, n_head=head_count, dropout=dropout)
 
 model.to(device)
 print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
