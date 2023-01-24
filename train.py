@@ -21,6 +21,16 @@ eval_average_loss_n = 200
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.manual_seed(1337)
 
+# uncomment for high values
+# input_size = 256 
+# batch_size = 64 
+# eval_interval = 500
+# learning_rate = 3e-4
+# n_embd = 384
+# n_head = 6
+# n_layer = 6
+# dropout = 0.2
+
 # load data
 with open('input.txt', 'r', encoding='utf-8') as f:
     text = f.read()
