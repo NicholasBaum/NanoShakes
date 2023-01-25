@@ -101,11 +101,16 @@ for epoch in range(epoch_count):
         print(
             f"Epoch: {epoch}\t\tTrainloss: {losses['train']:.4f}\t\tValloss: {losses['val']:.4f}")
 print('\n')
+training_time = timer.stop()
+print(f'Training Time: {training_time}')
+print('\n')
+
+timer.restart()
 # just a tensor to start with and configuring the device its on
 start = torch.zeros((1, 1), dtype=torch.long, device=device)
 print(decode(model.generate(start, 2000)[0].tolist()))
 print('\n')
-print(timer.stop())
+print(f'Sequence Generation Time: {timer.stop()}')
 
 # parameters of the model won't be save by this 
 # evaluate.py for further information

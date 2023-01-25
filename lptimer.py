@@ -11,6 +11,11 @@ class LP_Timer:
         self.__start = time.time()
         return self
 
+    def restart(self):
+        self.__stopped = False
+        self.__start = time.time()
+        self.elapsed_time = 0
+
     def elapsed(self):
         if(self.__stopped):
             return self.format_time(self.elapsed_time)
