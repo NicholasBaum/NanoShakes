@@ -35,7 +35,7 @@ class NanoShakes(nn.Module):
         output = self.norm1(output)
         output = self.embd2vocab(output)
 
-        if targets == None:
+        if targets is None:
             loss = None
         else:
             B, T, C = output.shape
