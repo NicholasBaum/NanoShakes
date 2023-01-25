@@ -99,7 +99,7 @@ for epoch in range(epoch_count):
     if epoch % eval_interval == 0 or epoch == epoch_count-1:
         losses = calcAverageError(model)
         print(
-            f"Epoch: {epoch}\t\tTrainloss: {losses['train']:.4f}\t\tValloss: {losses['val']:.4f}")
+            f"Epoch: {epoch}\t\tTime {timer.elapsed()}\t\tTrainloss: {losses['train']:.4f}\t\tValloss: {losses['val']:.4f}")
 print('\n')
 training_time = timer.stop()
 print(f'Training Time: {training_time}')
@@ -114,4 +114,4 @@ print(f'Sequence Generation Time: {timer.stop()}')
 
 # parameters of the model won't be save by this 
 # evaluate.py for further information
-#torch.save(model.state_dict(), "trained.pth")
+torch.save(model.state_dict(), "trained.pth")
