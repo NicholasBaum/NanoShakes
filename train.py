@@ -1,6 +1,6 @@
 from nanoshakes_model import NanoShakes
 import torch
-from lptimer import lp_timer as timer
+from lptimer import LP_Timer as Timer
 
 # hyper parameters
 input_size = 32
@@ -85,7 +85,7 @@ model = NanoShakes(vocab_size=vocab_size, input_size=input_size, embd_size=embd_
 model.to(device)
 print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
 opt = torch.optim.AdamW(model.parameters(), lr=learning_rate)
-timer = timer().start()
+timer = Timer().start()
 for epoch in range(epoch_count):
     xBatch, yBatch = getBatch('train')
     # forward
