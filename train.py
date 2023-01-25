@@ -1,9 +1,6 @@
 from nanoshakes_model import NanoShakes
-import time
-from datetime import timedelta
 import torch
-import torch.nn as nn
-from torch.nn import functional as F
+from lptimer import lp_timer as timer
 
 # hyper parameters
 input_size = 32
@@ -88,7 +85,7 @@ model = NanoShakes(vocab_size=vocab_size, input_size=input_size, embd_size=embd_
 model.to(device)
 print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
 opt = torch.optim.AdamW(model.parameters(), lr=learning_rate)
-start_time = time.time()
+timer = timer().start()
 for epoch in range(epoch_count):
     xBatch, yBatch = getBatch('train')
     # forward
@@ -108,4 +105,8 @@ print('\n')
 start = torch.zeros((1, 1), dtype=torch.long, device=device)
 print(decode(model.generate(start, 2000)[0].tolist()))
 print('\n')
-print(str(timedelta(seconds=time.time()-start_time)))
+print(timer.stop())
+
+# parameters of the model won't be save by this 
+# evaluate.py for further information
+#torch.save(model.state_dict(), "trained.pth")
