@@ -22,8 +22,8 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.manual_seed(1337)
 
 # uncomment for high values
-# input_size = 256 
-# batch_size = 64 
+# input_size = 256
+# batch_size = 64
 # eval_interval = 500
 # learning_rate = 3e-4
 # embd_size = 384
@@ -84,8 +84,8 @@ def calcAverageError(model):
 
 print("Using " + device)
 model = NanoShakes(vocab_size=vocab_size, input_size=input_size, embd_size=embd_size,
-                   layer_count=layer_count, head_count=head_count, dropout=dropout)
-#model = NgGptModel(vocab_size=vocab_size, n_embd=embd_size, block_size=input_size,
+                   layer_count=layer_count, head_count=head_count, dropout=dropout, device=device)
+# model = NgGptModel(vocab_size=vocab_size, n_embd=embd_size, block_size=input_size,
 #                            n_layer=layer_count, n_head=head_count, dropout=dropout)
 
 model.to(device)
