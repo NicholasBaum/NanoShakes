@@ -101,8 +101,8 @@ for epoch in range(epoch_count):
     if epoch % eval_interval == 0 or epoch == epoch_count-1:
         if evaluateDetailedLoss:
             losses = calcAverageError(model)
-            print(f"""Epoch: {epoch}\t\tTime {timer.elapsed()}
-            \t\tTrainloss: {losses['train']:.4f}\t\tValloss: {losses['val']:.4f}""")
+            print(f"Epoch: {epoch}\t\tTime {timer.elapsed()}"
+            f"\t\tTrainloss: {losses['train']:.4f}\t\tValloss: {losses['val']:.4f}")
         else:
             print(f"Epoch: {epoch}\t\tTime {timer.elapsed()}")
 
