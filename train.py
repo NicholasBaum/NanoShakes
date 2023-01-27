@@ -10,6 +10,8 @@ head_count = 4
 embd_size = 16 * 4
 dropout = 0.0
 
+use_high_values = False
+evaluateDetailedLoss = True
 eval_interval = 100
 learning_rate = 1e-3
 epoch_count = 5000
@@ -17,15 +19,15 @@ eval_average_loss_n = 200
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.manual_seed(1337)
 
-# uncomment for high values
-# input_size = 256
-# batch_size = 64
-# eval_interval = 500
-# learning_rate = 3e-4
-# embd_size = 384
-# head_count = 6
-# layer_count = 6
-# dropout = 0.2
+if use_high_values:
+    input_size = 256
+    batch_size = 64
+    eval_interval = 500
+    learning_rate = 3e-4
+    embd_size = 384
+    head_count = 6
+    layer_count = 6
+    dropout = 0.2
 
 # load data
 with open('input.txt', 'r', encoding='utf-8') as f:
@@ -97,9 +99,13 @@ for epoch in range(epoch_count):
     opt.step()
 
     if epoch % eval_interval == 0 or epoch == epoch_count-1:
-        losses = calcAverageError(model)
-        print(
-            f"Epoch: {epoch}\t\tTime {timer.elapsed()}\t\tTrainloss: {losses['train']:.4f}\t\tValloss: {losses['val']:.4f}")
+        if evaluateDetailedLoss:
+            losses = calcAverageError(model)
+            print(f"""Epoch: {epoch}\t\tTime {timer.elapsed()}
+            \t\tTrainloss: {losses['train']:.4f}\t\tValloss: {losses['val']:.4f}""")
+        else:
+            print(f"Epoch: {epoch}\t\tTime {timer.elapsed()}")
+
 print('\n')
 training_time = timer.stop()
 print(f'Training Time: {training_time}')
@@ -112,6 +118,6 @@ print(decode(model.generate(start, 2000)[0].tolist()))
 print('\n')
 print(f'Sequence Generation Time: {timer.stop()}')
 
-# parameters of the model won't be save by this 
+# parameters of the model won't be save by this
 # evaluate.py for further information
 torch.save(model.state_dict(), "trained.pth")

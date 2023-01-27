@@ -73,9 +73,8 @@ class TransformerBlock(nn.Module):
     def __init__(self, embd_size, head_count, input_size, dropout):
         super().__init__()
         head_size = embd_size // head_count
-        # allows parallel modules when put in brackets
-        self.heads = nn.ModuleList(
-            [Head(embd_size, head_size, input_size, dropout) for _ in range(head_count)])
+        self.head = MultiHead(embd_size, head_size,
+                              input_size, dropout, head_count=head_count)
         self.proj = nn.Linear(embd_size, embd_size)
         self.drop = nn.Dropout(dropout)
         self.lastFF = FF_Transformer(embd_size, dropout)
@@ -84,7 +83,7 @@ class TransformerBlock(nn.Module):
 
     def forward(self, x):
         out = self.norm1(x)
-        out = torch.cat([h(out) for h in self.heads], dim=-1)
+        out = self.head(out)
         out = self.drop(self.proj(out))
         # This is additive because it's a residual connection also called skipconnection
         # idea is kinda branching the calculation and bringing it back together
@@ -93,35 +92,39 @@ class TransformerBlock(nn.Module):
         return x
 
 
-"""
-  Head
-    Parameters:
-    x: Tensor of shape batch_size x input_size x embd_size
-"""
-
-
-class Head(nn.Module):
-    def __init__(self, embd_size, head_size, input_size, dropout):
+class MultiHead(nn.Module):
+    def __init__(self, embd_size, head_size, input_size, dropout, head_count):
         super().__init__()
-        self.q = nn.Linear(embd_size, head_size, bias=False)
-        self.k = nn.Linear(embd_size, head_size, bias=False)
-        self.v = nn.Linear(embd_size, head_size, bias=False)
+        self.qkv = nn.Linear(embd_size, 3 * embd_size, bias=False)
         self.register_buffer('tril', torch.tril(
-            torch.ones(input_size, input_size)))
+            torch.ones(input_size, input_size)).view(1, 1, input_size, input_size))
         self.dropout = nn.Dropout(dropout)
+        self.head_count = head_count
 
     def forward(self, x):
-        curr_input_n = x.shape[1]
-        q = self.q(x)
-        k = self.k(x)
-        v = self.v(x)
-        x = q @ k.transpose(1, 2)  # batch_size x input_size x input_size
-        x = x*x.shape[2]**-0.5  # scale result 1/sqrt(d_k) in the paper
-        x = x.masked_fill(
-            self.tril[:curr_input_n, :curr_input_n] == 0, float('-inf'))
-        x = F.softmax(x, dim=2)
+        B, I, E = x.shape  # batch_size x input_size x embd_size
+        # I is actually current_input_size
+        # possibly less than the max input_size
+        # batch_size x input_size x embd_size
+        q, k, v = self.qkv(x).split(E, 2)  # all three are of shape B x I X E
+        # splitting matrices into chunks aka head for performance
+        q = q.view(B, I, self.head_count,  E //
+                   self.head_count).permute(0, 2, 1, 3)
+        k = k.view(B, I, self.head_count,  E //
+                   self.head_count).permute(0, 2, 1, 3)
+        v = v.view(B, I, self.head_count,  E //
+                   self.head_count).permute(0, 2, 1, 3)
+
+        # now this is point where splitting into heads changes the results
+        # because multiplying QxK isn't the same multiplying chunks of Q and K and bringing them back together
+        x = q @ k.transpose(-2, -1)  # batch_size x input_size x input_size
+        x = x*x.shape[-1]**-0.5  # scale result 1/sqrt(d_k) in the paper
+        x = x.masked_fill(self.tril[:, :, :I, :I] == 0, float('-inf'))
+        x = F.softmax(x, dim=-1)
         x = self.dropout(x)
-        x = x @ v  # batch_size x input_size x embd_size
+        # batch_size x input_size x embd_size
+        x = x @ v
+        x = x.permute(0, 2, 1, 3).reshape(B, I, E)
         return x
 
 
