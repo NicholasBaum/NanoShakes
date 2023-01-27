@@ -1,4 +1,4 @@
-from nanoshakes_model import NanoShakes
+from nanoshakes import NanoShakes
 import torch
 from lptimer import LP_Timer as Timer
 
