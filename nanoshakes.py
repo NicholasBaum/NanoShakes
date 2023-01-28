@@ -51,17 +51,24 @@ class NanoShakes(nn.Module):
 
         return output, loss
 
-    def generate(self, x, count):
+    def generate(self, count, start=None):
+
+        if start is None:
+            x = torch.zeros((1, 1), dtype=torch.long, device=self.device)
+        else:
+            x = torch.ones((1, 1), dtype=torch.long,
+                           device=self.device) * start
+
         for _ in range(count):
             # as new text keeps extending in this loop it needs to be cropped to
             # the allowed input_size
             trail = x[:, -self.input_size:]
-            out, loss = self(trail)
+            out, _ = self(trail)
             out = out[:, -1, :]  # batch_size x vocab_size
             dist = F.softmax(out, dim=-1)
             next = torch.multinomial(dist, num_samples=1)
             x = torch.cat((x, next), dim=1)
-        return x
+        return x[0].tolist()
 
 
 """
@@ -98,7 +105,7 @@ class MultiHead(nn.Module):
         super().__init__()
         # instead of multiplying q,k,v separately
         # we can do the equivalent by using a bigger matrix
-        # and split the result afterwards        
+        # and split the result afterwards
         self.qkv = nn.Linear(embd_size, 3 * embd_size, bias=False)
         self.register_buffer('tril', torch.tril(
             torch.ones(input_size, input_size)).view(1, 1, input_size, input_size))
@@ -109,7 +116,7 @@ class MultiHead(nn.Module):
         # batch_size x current_input_size x embd_size
         B, I, E = x.shape
         # q, k, v are of shape B x I x E
-        q, k, v = self.qkv(x).split(E, 2)  
+        q, k, v = self.qkv(x).split(E, 2)
         # splitting matrices into chunks aka heads for performance
         q = q.view(B, I, self.head_count,  E //
                    self.head_count).permute(0, 2, 1, 3)
@@ -118,9 +125,9 @@ class MultiHead(nn.Module):
         v = v.view(B, I, self.head_count,  E //
                    self.head_count).permute(0, 2, 1, 3)
 
-        # so far splitting matrices didn't change results                
+        # so far splitting matrices didn't change results
         # but multiplying the heads separately
-        # and concatenating them later 
+        # and concatenating them later
         # isn't a equivalent operation anymore
         x = q @ k.transpose(-2, -1)  # batch_size x input_size x input_size
         x = x*x.shape[-1]**-0.5  # scale result 1/sqrt(d_k) in the paper

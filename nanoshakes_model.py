@@ -49,17 +49,24 @@ class NanoShakes(nn.Module):
 
         return output, loss
 
-    def generate(self, x, count):
+    def generate(self, count, start=None):
+
+        if start is None:
+            x = torch.zeros((1, 1), dtype=torch.long, device=self.device)
+        else:
+            x = torch.ones((1, 1), dtype=torch.long,
+                           device=self.device) * start
+
         for _ in range(count):
             # as new text keeps extending in this loop it needs to be cropped to
             # the allowed input_size
             trail = x[:, -self.input_size:]
-            out, loss = self(trail)
+            out, _ = self(trail)
             out = out[:, -1, :]  # batch_size x vocab_size
             dist = F.softmax(out, dim=-1)
             next = torch.multinomial(dist, num_samples=1)
             x = torch.cat((x, next), dim=1)
-        return x
+        return x[0].tolist()
 
 
 """
