@@ -28,7 +28,9 @@ class NanoShakes(nn.Module):
         # all i understand is that the positional information is there in some kind
         # of way, but how it could be utilized in this form is totally unclear to me
         # but well, adam will sort it out
-        # batch_size x input_size x embd_size    # need to use x.shape[1] because sentences could be shorter thatn input_size
+        # need to grab the current input size with x.shape[1]
+        # because it doesn't have to be the maximum of input_size
+        # batch_size x input_size x embd_size
         wp = self.pos_embedding(torch.arange(x.shape[1], device=self.device))
         output = we + wp
         output = self.transformer(output)
@@ -43,7 +45,7 @@ class NanoShakes(nn.Module):
             targets = targets.view(B*T)
             # output and targets have different shapes
             # targets is just a vector of the token ids
-            # output is a matrix where very line shows a probability for every token
+            # output is a matrix where every line shows a probability for every token
             # in the vocab
             loss = F.cross_entropy(output, targets)
 
@@ -73,8 +75,7 @@ class TransformerBlock(nn.Module):
     def __init__(self, embd_size, head_count, input_size, dropout):
         super().__init__()
         head_size = embd_size // head_count
-        self.head = MultiHead(embd_size, head_size,
-                              input_size, dropout, head_count=head_count)
+        self.head = MultiHead(embd_size, input_size, dropout, head_count)
         self.proj = nn.Linear(embd_size, embd_size)
         self.drop = nn.Dropout(dropout)
         self.lastFF = FF_Transformer(embd_size, dropout)
@@ -93,8 +94,11 @@ class TransformerBlock(nn.Module):
 
 
 class MultiHead(nn.Module):
-    def __init__(self, embd_size, head_size, input_size, dropout, head_count):
+    def __init__(self, embd_size, input_size, dropout, head_count):
         super().__init__()
+        # instead of multiplying q,k,v separately
+        # we can do the equivalent by using a bigger matrix
+        # and split the result afterwards        
         self.qkv = nn.Linear(embd_size, 3 * embd_size, bias=False)
         self.register_buffer('tril', torch.tril(
             torch.ones(input_size, input_size)).view(1, 1, input_size, input_size))
@@ -102,12 +106,11 @@ class MultiHead(nn.Module):
         self.head_count = head_count
 
     def forward(self, x):
-        B, I, E = x.shape  # batch_size x input_size x embd_size
-        # I is actually current_input_size
-        # possibly less than the max input_size
-        # batch_size x input_size x embd_size
-        q, k, v = self.qkv(x).split(E, 2)  # all three are of shape B x I X E
-        # splitting matrices into chunks aka head for performance
+        # batch_size x current_input_size x embd_size
+        B, I, E = x.shape
+        # q, k, v are of shape B x I x E
+        q, k, v = self.qkv(x).split(E, 2)  
+        # splitting matrices into chunks aka heads for performance
         q = q.view(B, I, self.head_count,  E //
                    self.head_count).permute(0, 2, 1, 3)
         k = k.view(B, I, self.head_count,  E //
@@ -115,8 +118,10 @@ class MultiHead(nn.Module):
         v = v.view(B, I, self.head_count,  E //
                    self.head_count).permute(0, 2, 1, 3)
 
-        # now this is point where splitting into heads changes the results
-        # because multiplying QxK isn't the same multiplying chunks of Q and K and bringing them back together
+        # so far splitting matrices didn't change results                
+        # but multiplying the heads separately
+        # and concatenating them later 
+        # isn't a equivalent operation anymore
         x = q @ k.transpose(-2, -1)  # batch_size x input_size x input_size
         x = x*x.shape[-1]**-0.5  # scale result 1/sqrt(d_k) in the paper
         x = x.masked_fill(self.tril[:, :, :I, :I] == 0, float('-inf'))
@@ -124,6 +129,7 @@ class MultiHead(nn.Module):
         x = self.dropout(x)
         # batch_size x input_size x embd_size
         x = x @ v
+        # concatenating head results again
         x = x.permute(0, 2, 1, 3).reshape(B, I, E)
         return x
 
