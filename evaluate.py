@@ -1,5 +1,5 @@
 import torch
-from nanoshakes_model import NanoShakes
+from nanoshakes import NanoShakes
 from lptimer import LP_Timer as Timer
 
 # load data
@@ -32,5 +32,5 @@ trained_model.load_state_dict(torch.load(
 trained_model.to(torch.device(device))
 start = torch.zeros((1, 1), dtype=torch.long, device=device)
 timer = Timer().start()
-print(decode(trained_model.generate(start, 200)[0].tolist()))
+print(decode(trained_model.generate(200)))
 print(timer.stop())
