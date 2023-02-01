@@ -30,7 +30,8 @@ trained_model = NanoShakes(vocab_size=vocab_size, input_size=input_size, embd_si
 trained_model.load_state_dict(torch.load(
     'trained.pth', map_location=torch.device(device)))
 trained_model.to(torch.device(device))
-start = torch.zeros((1, 1), dtype=torch.long, device=device)
 timer = Timer().start()
-print(decode(trained_model.generate(200)))
+print(decode(trained_model.generate(2000)))
+print('\n')
+print(f'Sequence Generation Time: {timer.stop()}')
 print(timer.stop())
